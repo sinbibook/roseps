@@ -256,11 +256,26 @@
       sloganEl.textContent = '지금 바로 ' + propertyName + particle + ' 함께해 보세요.';
     }
 
-    // 업체 전화번호
-    var phone = this.toPhoneList(prop.contactPhone)[0];
+    // 업체 전화번호 (배열이면 전부 한 줄씩 노출)
+    var phones = this.toPhoneList(prop.contactPhone);
     var phoneEl = document.querySelector('[data-footer-phone]');
     if (phoneEl) {
-      phoneEl.textContent = phone;
+      phoneEl.textContent = '';
+      // 고정 높이 footer가 넘치지 않도록 번호 2개 이상일 때만 상단 여백 축소
+      var footerEl = document.querySelector('#sh_ft');
+      if (footerEl) {
+        if (phones.length > 1) {
+          footerEl.classList.add('has-multi-phone');
+        } else {
+          footerEl.classList.remove('has-multi-phone');
+        }
+      }
+      phones.forEach(function (p) {
+        var item = document.createElement('span');
+        item.className = 'phoneItem';
+        item.textContent = p;
+        phoneEl.appendChild(item);
+      });
     }
 
     // 사업자 정보 (주소 / 사업자번호 / 대표자 — 줄바꿈 유지, 링크·pop은 형제이므로 건드리지 않음)
