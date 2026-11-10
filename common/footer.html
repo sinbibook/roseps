@@ -53,6 +53,13 @@
         </div>
         <div class="right" data-aos="fade-left">
             <div class="top">
+                <!-- data-* 속성 : data-footer-rural-stay-mark-wrap (customFields.footer.ruralStayMarks 또는 기존 ruralStayMark 가 있을 때만 노출, 기본 숨김)
+                     data-footer-rural-stay-mark : 농어촌민박사업자 이미지 (표시마크 + 신고번호, alt = description)
+                     노출 시 매퍼가 #sh_ft 에 has-rural-stay-mark 를 붙여 고정 높이를 풀어 준다 -->
+                <div class="ft_rural_stay_mark_wrap" data-footer-rural-stay-mark-wrap style="display: none">
+                    <img class="ft_rural_stay_mark" src="" alt="농어촌민박사업자" data-footer-rural-stay-mark>
+                    <img class="ft_rural_stay_mark" src="" alt="농어촌민박사업자" data-footer-rural-stay-mark>
+                </div>
                 <div class="cs">
                     <p><b>예약문의</b><span data-footer-phone>070-0000-0000</span></p>
                 </div>

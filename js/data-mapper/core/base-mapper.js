@@ -225,6 +225,32 @@
     return (item.roomtypes || []).some(function (rt) { return String(rt && rt.id) === String(currentId); });
   };
 
+  // ── 객실 미리보기(layout-map) 사용 여부 ──────────────────
+  // layout-map.html 이 404 로 보내는 기준과 같아야 한다.
+  // E 는 **명시적으로 enabled === false 일 때만** 꺼짐으로 본다
+  // (섹션이 없으면 = 데이터 미도착/부분 갱신 → 리다이렉트하지 않는다).
+  BaseDataMapper.prototype.isLayoutMapEnabled = function () {
+    var page = this.getPages().layoutMap;
+    var section = page && page.sections && page.sections[0];
+    return !(section && section.enabled === false);
+  };
+
+  // 대메뉴 ROOMS(푸터 data-footer-rooms-link)가 갈 곳.
+  //   미리보기 켜짐 → layout-map.html (객실 미리보기)
+  //   미리보기 꺼짐 → 첫 번째 객실 상세 (헤더 ROOMS 서브메뉴의 첫 객실 항목과 같은 곳 — 그룹 숙소면 첫 그룹의 첫 객실)
+  // 객실이 하나도 없으면 갈 곳이 없으므로 null — 호출부가 정한다.
+  BaseDataMapper.prototype.getRoomsEntryLink = function () {
+    if (this.isLayoutMapEnabled()) return 'layout-map.html';
+    var self = this;
+    var link = null;
+    this.getRoomMenuItems(this.getRoomtypes()).some(function (item) {
+      if (!String(self.getRoomMenuLabel(item)).trim()) return false;
+      link = self.getRoomMenuLink(item, 'id');
+      return true;
+    });
+    return link;
+  };
+
   BaseDataMapper.prototype.toPhoneList = function (value) {
     var fallbackPhone = '1833-9306';
     var list = [];
@@ -271,6 +297,27 @@
     upsertMetaByName('keywords', seo.keywords);
     upsertMetaByName('naver-site-verification', seo.naverSiteVerification);
     upsertMetaByName('google-site-verification', seo.googleSiteVerification);
+  };
+
+  // 데스크톱에서 숙소명이 제목 너비를 넘지 않도록 실제 렌더링 폭에 맞춘다.
+  BaseDataMapper.prototype.fitRoomPreviewTitle = function (nameEl) {
+    var title = nameEl.parentElement;
+    if (!title) return;
+    var fit = function () {
+      title.style.fontSize = '';
+      if (window.innerWidth <= 1024 || !nameEl.textContent.trim()) return;
+      var size = parseFloat(getComputedStyle(title).fontSize);
+      var width = title.clientWidth;
+      if (width && nameEl.scrollWidth > width) {
+        title.style.fontSize = (size * width / nameEl.scrollWidth * 0.99) + 'px';
+      }
+    };
+    fit();
+    if (!this._roomTitleFit) {
+      this._roomTitleFit = fit;
+      window.addEventListener('resize', fit);
+      if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+    }
   };
 
   global.BaseDataMapper = BaseDataMapper;
