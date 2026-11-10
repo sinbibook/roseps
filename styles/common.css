@@ -433,3 +433,60 @@ background-image: url(../images/icon_down.png);background-repeat: no-repeat; bac
 [data-consult='off'] .ft_btn_reserve.on {
   bottom: 6px;
 }
+
+/* ── 푸터 농어촌민박사업자 이미지 (템플릿 확장) ─────────────────────
+   customFields.footer.ruralStayMark 가 있을 때만 매퍼가 노출한다(마크업 기본 숨김).
+   우측 정보 칸 맨 위(예약문의 위)에 정보 텍스트와 같은 정렬로 둔다.
+   세로형(마크 + 신고번호 박스)이라 폭을 고정(PC 180px / 모바일 160px)하고 높이는 비율에 맡긴다.
+   신고번호가 읽히도록 모바일에서도 160px 아래로 줄이지 않는다.
+   #sh_ft 는 PC 380px / 태블릿 583px 고정 높이라 이미지가 들어가면 넘친다.
+   매퍼가 붙이는 .has-rural-stay-mark 일 때만 높이를 내용에 맡기고(기존 높이는 최소값으로 유지)
+   좌우 칸을 늘려 좌측 copyright 가 바닥에 붙는 기존 배치를 지킨다. */
+#sh_ft .ft_rural_stay_mark_wrap {
+  display: flex;
+  justify-content: flex-start;
+  padding-bottom: 24px;
+}
+#sh_ft .ft_rural_stay_mark {
+  display: block;
+  width: 180px;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+}
+@media (max-width: 768px) {
+  #sh_ft .ft_rural_stay_mark {
+    width: 160px;
+  }
+}
+@media (min-width: 769px) {
+  #sh_ft.has-rural-stay-mark {
+    height: auto;
+  }
+  #sh_ft.has-rural-stay-mark .flex {
+    height: auto;
+    min-height: 380px;
+    align-items: stretch;
+  }
+  #sh_ft.has-rural-stay-mark .left,
+  #sh_ft.has-rural-stay-mark .right {
+    height: auto;
+  }
+  #sh_ft.has-rural-stay-mark .right {
+    padding-bottom: 45px;
+  }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  #sh_ft.has-rural-stay-mark .flex {
+    min-height: 583px;
+  }
+  #sh_ft.has-rural-stay-mark .right {
+    padding-bottom: 40px;
+  }
+}
+@media (max-width: 768px) {
+  #sh_ft .ft_rural_stay_mark_wrap {
+    justify-content: center;
+    padding-bottom: 20px;
+  }
+}

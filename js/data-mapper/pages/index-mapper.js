@@ -209,8 +209,9 @@
     // Property nameEn 매핑 (customFields.property.nameEn 우선, 없으면 property.nameEn, 둘 다 없으면 빼고)
     var englishNameEl = document.querySelector('[data-property-english-name]');
     var propertyNameEn = this.getPropertyNameEn();
-    if (englishNameEl && propertyNameEn) {
-      englishNameEl.textContent = propertyNameEn;
+    if (englishNameEl) {
+      englishNameEl.textContent = propertyNameEn || '';
+      this.fitRoomPreviewTitle(englishNameEl);
     }
 
     // Gallery description 매핑 (\n을 <br>로 변환, 빈 값도 반영)

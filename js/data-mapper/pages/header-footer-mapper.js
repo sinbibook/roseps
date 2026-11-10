@@ -48,10 +48,9 @@
   // MAPPER: layoutMap.enabled === false 이면 ROOMS 서브메뉴의 `미리보기` 숨김
   // (헤더 PC + 모바일 aside). 기존에는 mapFooterMenu 가 ROOMS 대메뉴의 href 만
   // 바꾸고 서브메뉴 항목은 그대로 둬서, 꺼진 페이지에 눌러 들어갈 수 있었다.
+  // 판정은 layout-map.html 의 404 기준과 같은 isLayoutMapEnabled() 를 쓴다.
   HeaderFooterMapper.prototype.mapLayoutMapMenu = function () {
-    var pages = this.getPages();
-    var lm = pages.layoutMap && pages.layoutMap.sections && pages.layoutMap.sections[0];
-    var hide = !!(lm && lm.enabled === false);
+    var hide = !this.isLayoutMapEnabled();
     document.querySelectorAll('[data-layout-map-menu]').forEach(function (el) {
       el.style.display = hide ? 'none' : '';
     });
@@ -70,25 +69,12 @@
 
   // MAPPER: footer 대메뉴 → 헤더 각 대메뉴의 첫 서브메뉴로 이동
   HeaderFooterMapper.prototype.mapFooterMenu = function () {
-    // ROOMS: layoutMap(미리보기)이 enabled면 layout-map.html, 아니면 첫 활성 객실
+    // ROOMS: layoutMap(미리보기) 켜짐 → layout-map.html / 꺼짐 → 헤더 ROOMS 서브메뉴 첫 객실 (getRoomsEntryLink)
+    // 판정은 layout-map.html 의 404 기준과 같은 isLayoutMapEnabled() — 꺼진 채 layout-map.html 로 두면 404.
+    // 객실이 하나도 없으면 room.html
     var roomsLink = document.querySelector('[data-footer-rooms-link]');
     if (roomsLink) {
-      var pages = this.getPages();
-      var layoutEnabled = pages.layoutMap && pages.layoutMap.sections &&
-        pages.layoutMap.sections[0] && pages.layoutMap.sections[0].enabled !== false;
-      if (layoutEnabled) {
-        roomsLink.href = 'layout-map.html';
-      } else {
-        var self = this;
-        var firstActive = this.getRoomtypes().filter(function (rt) {
-          return !!self.getRoomtypeName(rt);
-        }).find(function (rt) {
-          var m = self.getMatchedRoom(rt);
-          return m && m.status === 'active';
-        });
-        var firstItem = this.getRoomMenuItems(firstActive ? [firstActive] : [])[0];
-        roomsLink.href = firstItem ? this.getRoomMenuLink(firstItem, 'id') : 'room.html';
-      }
+      roomsLink.href = this.getRoomsEntryLink() || 'room.html';
     }
 
     // SPECIAL: 첫 facility
@@ -180,9 +166,11 @@
       var link = (button.tagName === 'A') ? button : button.querySelector('a');
       if (link) {
         link.href = 'javascript:void(0)';
-        link.addEventListener('click', function () {
+        // addEventListener 로 쌓지 않고 덮어쓴다. 미리보기는 샘플 데이터(ybsId "YBS ID")로 먼저 그린 뒤
+        // 실제 데이터로 다시 그리는데, 쌓이면 샘플 링크(ypIdx=YBS%20ID)까지 함께 열린다
+        link.onclick = function () {
           window.open(ybs_url + ybsId, '_blank');
-        });
+        };
       }
     });
   };
@@ -383,8 +371,46 @@
     });
   };
 
+  // MAPPER: customFields.footer.ruralStayMark → [data-footer-rural-stay-mark] (우측 정보 칸 맨 위, 예약문의 위)
+  // 농어촌민박사업자 이미지가 있을 때만 이미지 줄을 노출한다. 없으면 숨겨 기존 푸터와 같다.
+  // #sh_ft 는 고정 높이라 노출할 때만 has-rural-stay-mark 로 높이를 풀어 준다.
+  // 프리뷰는 같은 페이지에서 다시 매핑하므로 매번 표시 상태를 되돌린다.
+  HeaderFooterMapper.prototype.mapRuralStayMark = function () {
+    var footer = this.getCustomFields().footer || {};
+    var footerMarks = footer;
+    var marks = Array.isArray(footerMarks.ruralStayMarks)
+      ? footerMarks.ruralStayMarks.slice(0, 2)
+      : [footerMarks.ruralStayMark];
+    var markUrl = marks.some(function (mark) { return mark && mark.url; });
+
+    document.querySelectorAll('#sh_ft').forEach(function (footerEl) {
+      footerEl.classList.toggle('has-rural-stay-mark', !!markUrl);
+    });
+    document.querySelectorAll('[data-footer-rural-stay-mark-wrap]').forEach(function (wrap) {
+      wrap.style.display = markUrl ? '' : 'none';
+    });
+    document.querySelectorAll('[data-footer-rural-stay-mark-wrap]').forEach(function (wrap) {
+      var images = wrap.querySelectorAll('[data-footer-rural-stay-mark]');
+      var count = marks.filter(function (mark) { return mark && mark.url; }).length;
+      images.forEach(function (img, index) {
+        var mark = marks[index];
+        var url = mark && mark.url ? String(mark.url) : '';
+        img.style.display = url ? 'inline-block' : 'none';
+        img.style.maxWidth = count > 1 ? 'calc((100% - 12px) / 2)' : '';
+        img.style.marginLeft = index && url && marks[0] && marks[0].url ? '12px' : '';
+        if (!url) {
+          img.removeAttribute('src');
+          return;
+        }
+        img.src = url;
+        img.alt = (mark.description && String(mark.description).trim()) || '농어촌민박사업자';
+      });
+    });
+  };
+
   HeaderFooterMapper.prototype.mapFooter = function () {
     this.mapCopyright();
+    this.mapRuralStayMark();
     var prop = this.getProperty();
 
     // Footer 슬로건
